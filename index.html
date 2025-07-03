@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Sürücüsüz Araç & Dijital İkiz</title>
+  <!-- Chart.js kütüphanesini yükle -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+  /* Sayfa genel stil ayarları */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;  
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2 {
+      color: #9e0310;
+      margin-top: 0;
+    }
+    .section-title {
+      margin-top: 30px;
+      color: #9e0310;  
+    }
+    .card {
+      background-color: #f2f2f2;  
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    p {
+      margin: 5px 0;
+      color: #444;
+    }
+    strong {
+      color: #555;  
+    }
+    .value {
+      font-weight: bold;
+      color: #333;
+    }
+    /* Uyarı kutusu */
+    #alertContainer {
+      background-color: rgba(255, 0, 0, 0.747);
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      display: none; 
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Dijital İkiz Verileri</h1>
+    
+     
+    <div id="alertContainer">İzinsiz giriş tespit edildi!</div>
+
+   <!-- Veri kartlarının yerleştirileceği alan -->
+    <div id="data-container">
+      <p>Veriler yükleniyor...</p>
+    </div>
+    
+    <canvas id="myChart" width="400" height="200"></canvas>
+  </div>
+
+  <script>
+    
+    function fetchDigitalTwinData() {
+      fetch('/api/digital_twin')
+        .then(response => response.json())
+        .then(data => {
+          displayData(data);
+          checkIntrusion(data);   // İzinsiz girişi kontrol eder
+        })
+        .catch(error => {
+          console.error('Veri çekme hatası:', error);
+        });
+    }
+
+    // JSON verisini HTML içinde gösterir
+    function displayData(data) {
+      const container = document.getElementById('data-container');
+      container.innerHTML = `
+        <div class="card">
+          <h2 class="section-title">Araç Verileri</h2>
+          <p><strong>Araç ID:</strong> <span class="value">${data.vehicle.vehicle_id}</span></p>
+          <p><strong>Hız:</strong> <span class="value">${data.vehicle.speed} km/h</span></p>
+          <p><strong>Pil Durumu:</strong> <span class="value">${data.vehicle.battery} %</span></p>
+          <p><strong>Motor Durumu:</strong> <span class="value">${data.vehicle.engine_status}</span></p>
+          <p><strong>Motor RPM:</strong> <span class="value">${data.vehicle.telemetry.rpm}</span></p>
+          <p><strong>Motor Sıcaklığı:</strong> <span class="value">${data.vehicle.telemetry.temperature} °C</span></p>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Çevre Verileri</h2>
+          <p><strong>Yol Durumu:</strong> <span class="value">${data.environment.road_condition}</span></p>
+          <p><strong>Trafik:</strong> <span class="value">${data.environment.traffic}</span></p>
+          <p><strong>Hava Durumu:</strong> <span class="value">${data.environment.weather}</span></p>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Konum ve Zaman</h2>
+          <p><strong>Konum:</strong> <span class="value">${data.location.latitude}, ${data.location.longitude}</span></p>
+          <p><strong>Zaman Damgası:</strong> <span class="value">${data.timestamp}</span></p>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Araç İçindeki Kişi</h2>
+          <p><strong>Occupant (Araç İçi Kişi):</strong> <span class="value">${data.occupant}</span></p>
+        </div>
+      `;
+        // Grafik verileri hazırlanır
+      const ctx = document.getElementById('myChart').getContext('2d');
+      const battery = data.vehicle.battery;
+      const speed = data.vehicle.speed;
+      const rpm = data.vehicle.telemetry.rpm;
+      const temperature = data.vehicle.telemetry.temperature;
+      
+       // Chart.js ile pasta grafiği oluştur
+      new Chart(ctx, {
+        type: 'pie', 
+        data: {
+          labels: ['Pil (%)', 'Hız (km/h)', 'RPM', 'Sıcaklık (°C)'],
+          datasets: [{
+            label: 'Araç Değerleri',
+            data: [battery, speed, rpm, temperature],
+            backgroundColor: [
+              'rgba(54, 162, 235, 0.6)',
+              'rgba(255, 99, 132, 0.6)',
+              'rgba(155, 92, 86, 0.6)',
+              'rgba(75, 192, 192, 0.6)'
+            ],
+            borderColor: [
+              'rgba(54, 162, 235, 1)',
+              'rgba(255, 99, 132, 1)',
+              'rgba(155, 92, 86, 1)',
+              'rgba(75, 192, 192, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true
+        }
+      });
+    }
+
+    // İzinsiz giriş kontrolü
+    function checkIntrusion(data) {
+      const alertDiv = document.getElementById('alertContainer');
+      // Occupant değeri "Bilinmiyor" ise uyarıyı göster
+      if (data.occupant === 'Bilinmiyor') {
+        alertDiv.style.display = 'block';   // Uyarıyı gösterir
+      } else {
+        alertDiv.style.display = 'none';    // Uyarıyı gizler
+      }
+    }
+
+    // Sayfa yüklendiğinde ve her 10 saniyede bir veriyi güncelle
+    fetchDigitalTwinData();
+    setInterval(fetchDigitalTwinData, 10000);
+  </script>
+</body>
+</html>
