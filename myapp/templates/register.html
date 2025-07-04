@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Kayıt Ol</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Kayıt Formu</h1>
+    <form method="POST">
+        <label for="username">Kullanıcı Adı:</label>
+        <input type="text" name="username" id="username" required>
+        <br><br>
+        <label for="password">Şifre:</label>
+        <input type="password" name="password" id="password" required>
+        <br><br>
+        <button type="submit">Kayıt Ol</button>
+    </form>
+    <br>
+    <a href="{{ url_for('index') }}">Anasayfa</a>
+</body>
+</html>
+
+</html>

@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Anasayfa</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Hoş Geldiniz!</h1>
+    <p>Öğrenme Yönetim Sistemi Aracına hoş geldiniz. Lütfen kayıt olun veya giriş yapın.</p>
+    <a href="{{ url_for('register') }}">Kayıt Ol</a> | 
+    <a href="{{ url_for('login') }}">Giriş Yap</a>
+</body>
+</html>

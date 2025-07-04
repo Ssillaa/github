@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel</title>
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .course-card {
+            background-color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .card-text {
+            color: #555;
+            font-size: 0.95rem;
+        }
+       
+        .btn-primary {
+            background-color: #e64545;
+            border-color: #e64545;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: #b60404;
+            border-color: #b60404;
+        }     
+        .navbar-custom {
+            background-color: #ea4343;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+      <div class="container">
+        <a class="navbar-brand" href="#">Öğrenme Yönetim Sistemi </a>
+        <div class="collapse navbar-collapse">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('upload') }}">Dosya Yükle</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('logout') }}">Çıkış Yap</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Dashboard İçeriği -->
+    <div class="container mt-4">
+        <h1 class="mb-4">Hoş geldin, {{ name }}!</h1>
+        <h2 class="mb-3">Dersler</h2>
+        <div class="row">
+            {% for course in courses %}
+            <div class="col-md-4">
+                <div class="card course-card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ course.title }}</h5>
+                        <p class="card-text">{{ course.description }}</p>
+                        <a href="#" class="btn btn-primary">Daha Fazla Bilgi</a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <p>Henüz eklenmiş ders bulunmuyor.</p>
+            {% endfor %}
+        </div>
+    </div> 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
