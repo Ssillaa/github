@@ -7,6 +7,13 @@ from streamlit_folium import st_folium
 import datetime
 import altair as alt
 
+import streamlit as st
+import os
+
+st.write("📂Files:")
+st.write(os.listdir('.')) 
+# ---------------------
+
 # 1. PAGE CONFIGURATION & STYLING
 
 st.set_page_config(
@@ -214,4 +221,5 @@ else:
             * The ML model predicts a travel time of **{pred_minutes:.1f} min**.
             * This represents a time loss of **{pred_minutes - ideal_time_minutes:.1f} min** due to network impedance.
             * Congestion Impact Factor: **{congestion_level:.2f}**
+
         """)
