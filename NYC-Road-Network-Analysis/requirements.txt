@@ -1,1 +1,8 @@
-pandas numpy scikit-learn joblib streamlit folium streamlit-folium altair
+pandas
+numpy 
+scikit-learn 
+joblib 
+streamlit 
+folium 
+streamlit-folium 
+altair
