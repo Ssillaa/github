@@ -6,22 +6,17 @@ import folium
 from streamlit_folium import st_folium
 import datetime
 import altair as alt
-
-import streamlit as st
 import os
 
-st.write("📂Files:")
-st.write(os.listdir('.')) 
-# ---------------------
-
 # 1. PAGE CONFIGURATION & STYLING
-
+# ------------------------------------------------
 st.set_page_config(
     page_title="NYC Road Network Analysis System",
     page_icon="🛣️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
 
 st.markdown("""
     <style>
@@ -52,25 +47,31 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 2. LOAD RESOURCES
-
+# 2. LOAD RESOURCES 
+# ------------------------------------------------
 @st.cache_resource
 def load_model():
-
+  
     current_dir = os.path.dirname(os.path.abspath(__file__))
- 
+    
+    # 2. Construct the full path to the model file
     model_path = os.path.join(current_dir, 'nyc_taxi_model.pkl')
-
-    try:
-        return joblib.load(model_path)
-    except Exception as e:
-        st.error(f"⚠️ File found but could not be loaded. Error: {e}")
+    
+    # 3. Load the model
+    if os.path.exists(model_path):
+        try:
+            return joblib.load(model_path)
+        except Exception as e:
+            st.error(f"⚠️ Model file could not be loaded. Error: {e}")
+            return None
+    else:
+        st.error("⚠️ Model file not found. Please check GitHub repository.")
         return None
 
 model = load_model()
 
 def haversine_distance(lat1, lon1, lat2, lon2):
-    R = 6371
+    R = 6371 # Earth radius in km
     phi1, phi2 = np.radians(lat1), np.radians(lat2)
     dphi = np.radians(lat2 - lat1)
     dlambda = np.radians(lon2 - lon1)
@@ -78,7 +79,7 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
     return R * c
 
-
+# Pre-defined Nodes
 locations = {
     "Midtown (Times Sq)": (40.7580, -73.9855),
     "Upper East Side": (40.7736, -73.9566),
@@ -89,9 +90,11 @@ locations = {
     "Harlem Center": (40.8079, -73.9457)
 }
 
-# 3. SIDEBAR
+
+# 3. SIDEBAR CONTROLS
 
 st.sidebar.title("🛠️ Simulation Controls")
+st.sidebar.info("Adjust parameters to simulate different traffic scenarios on the Road Network.")
 
 st.sidebar.markdown("### 📍 Node Selection")
 pickup_name = st.sidebar.selectbox("Origin Node", list(locations.keys()), index=0)
@@ -100,10 +103,8 @@ dropoff_name = st.sidebar.selectbox("Destination Node", list(locations.keys()), 
 st.sidebar.markdown("### ⏰ Temporal Conditions")
 trip_date = st.sidebar.date_input("Date", datetime.date.today())
 
-
 st.sidebar.markdown("**Simulation Hour**")
 selected_hour = st.sidebar.slider("Hour of Day (0-23)", 0, 23, 14, help="Move the slider to simulate traffic at different times.")
-
 
 trip_time = datetime.time(selected_hour, 0)
 st.sidebar.warning(f"🕒 Simulating Traffic for: **{selected_hour}:00**")
@@ -111,15 +112,16 @@ st.sidebar.warning(f"🕒 Simulating Traffic for: **{selected_hour}:00**")
 pickup_coords = locations[pickup_name]
 dropoff_coords = locations[dropoff_name]
 
+# ------------------------------------------------
 # 4. MAIN DASHBOARD
-
+# ------------------------------------------------
 st.title("🛣️ Road Network Performance Analysis")
 st.markdown("Real-time prediction of network efficiency, congestion levels, and flow speed based on historical mobility data.")
 
 if model is None:
-    st.error(" Model file not found. Please run 'train_model.py' first.")
+    st.error("⚠️ Application cannot run without the model file. Please check GitHub repository.")
 else:
-     
+    # --- CALCULATIONS ---
     input_datetime = datetime.datetime.combine(trip_date, trip_time)
     dist_km = haversine_distance(pickup_coords[0], pickup_coords[1], dropoff_coords[0], dropoff_coords[1])
     
@@ -146,8 +148,8 @@ else:
     if efficiency_index > 100: efficiency_index = 100
     congestion_level = 100 - efficiency_index
 
-    #  KPI CARDS
-    st.markdown("### 📊 Network Key Performance Indicators")
+    # --- TOP ROW: KPI CARDS ---
+    st.markdown("### 📊 Network Key Performance Indicators (KPIs)")
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
     
     kpi1.metric("⏱️ Estimated Duration", f"{int(pred_minutes)} min", f"{int(pred_seconds%60)} sec")
@@ -157,22 +159,24 @@ else:
 
     st.markdown("---")
 
+  
     col_map, col_analysis = st.columns([1.3, 1], gap="large")
 
     with col_map:
         st.subheader("📍 Geospatial Network Visualization")
         
-        route_color = "#4aed1c" 
-        if congestion_level > 40: route_color = "#09efff" 
-        if congestion_level > 60: route_color = "#670d03" 
+        # Determine color based on congestion
+        route_color = "#2ecc71" # Green
+        if congestion_level > 40: route_color = "#f1c40f" # Yellow
+        if congestion_level > 60: route_color = "#e74c3c" # Red
             
         m = folium.Map(location=[(pickup_coords[0]+dropoff_coords[0])/2, (pickup_coords[1]+dropoff_coords[1])/2], 
                        zoom_start=11, tiles='CartoDB positron')
         
-        
+        # Route Line
         folium.PolyLine([pickup_coords, dropoff_coords], color=route_color, weight=5, opacity=0.9).add_to(m)
         
-       
+        # Markers
         folium.Marker(pickup_coords, icon=folium.Icon(color="blue", icon="play", prefix='fa'), popup="Origin").add_to(m)
         folium.Marker(dropoff_coords, icon=folium.Icon(color="black", icon="flag", prefix='fa'), popup="Destination").add_to(m)
         
@@ -180,7 +184,6 @@ else:
 
     with col_analysis:
         st.subheader("📈 Efficiency & Flow Analysis")
-        
         
         with st.container():
             
@@ -193,7 +196,7 @@ else:
 
             st.write("") 
 
-           
+            # 2. Comparative Bar Chart
             st.markdown("**Actual vs. Free-Flow Duration**")
             chart_data = pd.DataFrame({
                 'Scenario': ['Ideal Condition', 'Current Prediction'],
@@ -210,24 +213,21 @@ else:
             
             st.altair_chart(bar_chart, use_container_width=True)
 
-            
+            # 3. Efficiency Progress Bar
             st.write(f"**Network Efficiency Score: {efficiency_index:.1f}/100**")
             st.progress(int(efficiency_index))
             
             st.caption(f"This segment allows an average speed of {predicted_speed:.1f} km/h under selected conditions.")
 
-    
-    with st.expander("📄 Generate Detailed Report"):
+
+    with st.expander("📄 Generate Detailed Engineering Report"):
         st.write(f"""
         ### Road Network Assessment Report
         * **Segment:** {pickup_name} to {dropoff_name}
         * **Date/Time:** {trip_date} at {trip_time}
         * **Analysis:**
-            * The theoretical free flow travel time is **{ideal_time_minutes:.1f} min**.
+            * The theoretical free-flow travel time is **{ideal_time_minutes:.1f} min**.
             * The ML model predicts a travel time of **{pred_minutes:.1f} min**.
             * This represents a time loss of **{pred_minutes - ideal_time_minutes:.1f} min** due to network impedance.
             * Congestion Impact Factor: **{congestion_level:.2f}**
-
         """)
-
-
