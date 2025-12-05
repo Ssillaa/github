@@ -56,9 +56,26 @@ st.markdown("""
 
 @st.cache_resource
 def load_model():
+    # 1. Get the absolute path of the current file (app.py)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # 2. Construct the full path to the model file
+    # This ensures it works regardless of the server's working directory
+    model_path = os.path.join(current_dir, 'nyc_taxi_model.pkl')
+    
+    # 3. DEBUG: Check if file exists
+    if not os.path.exists(model_path):
+        st.error(f"🚨 CRITICAL ERROR: Model file not found!")
+        st.write(f"🔍 Searching at: `{model_path}`")
+        st.write("📂 Files found in current directory:")
+        st.code(os.listdir(current_dir)) # Lists all files to help debugging
+        return None
+        
+    # 4. Load the model
     try:
-        return joblib.load('nyc_taxi_model.pkl')
-    except FileNotFoundError:
+        return joblib.load(model_path)
+    except Exception as e:
+        st.error(f"⚠️ File found but could not be loaded. Error: {e}")
         return None
 
 model = load_model()
@@ -223,3 +240,4 @@ else:
             * Congestion Impact Factor: **{congestion_level:.2f}**
 
         """)
+
